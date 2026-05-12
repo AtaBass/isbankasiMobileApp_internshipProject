@@ -57,35 +57,6 @@ router.post('/groups/:groupId/members', async (req, res, next) => {
   }
 });
 
-// Challenge listesi (gönderilen + alınan)
-router.get('/challenges', async (req, res, next) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT c.*, u1.full_name AS from_name, u2.full_name AS to_name
-       FROM challenges c
-       JOIN users u1 ON u1.id = c.from_user_id JOIN users u2 ON u2.id = c.to_user_id
-       WHERE c.from_user_id = $1 OR c.to_user_id = $1 ORDER BY c.end_date DESC`,
-      [req.user.id]
-    );
-    res.json(rows);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.post('/challenges', async (req, res, next) => {
-  try {
-    const { to_user_id, type, target_value, end_date } = req.body;
-    const { rows } = await pool.query(
-      `INSERT INTO challenges (from_user_id, to_user_id, type, target_value, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [req.user.id, to_user_id, type || 'savings_target', target_value, end_date]
-    );
-    res.status(201).json(rows[0]);
-  } catch (e) {
-    next(e);
-  }
-});
-
 // Grup harcaması ekle (Splitwise)
 router.post('/groups/:groupId/expenses', async (req, res, next) => {
   try {

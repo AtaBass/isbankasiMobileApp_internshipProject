@@ -8,8 +8,9 @@ export const COLORS = {
   background: '#F8FAFC',
   backgroundLight: '#f8faff',
   surface: '#ffffff',
-  text: '#1a1a2e',
-  textSecondary: '#6b7280',
+  // Daha okunaklı tipografi için biraz daha yüksek kontrast
+  text: '#0f172a',
+  textSecondary: '#475569',
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',

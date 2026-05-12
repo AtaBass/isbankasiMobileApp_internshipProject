@@ -8,7 +8,6 @@ const transactionsRoutes = require('./routes/transactions');
 const reelsRoutes = require('./routes/reels');
 const tasksRoutes = require('./routes/tasks');
 const rewardsRoutes = require('./routes/rewards');
-const aiRoutes = require('./routes/ai');
 const dashboardRoutes = require('./routes/dashboard');
 const { errorHandler } = require('./middleware/error');
 
@@ -23,7 +22,6 @@ app.use('/api/transactions', transactionsRoutes);
 app.use('/api/reels', reelsRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/rewards', rewardsRoutes);
-app.use('/api/ai', aiRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/api/health', (_, res) => res.json({ ok: true }));

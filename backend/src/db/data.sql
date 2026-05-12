@@ -20,15 +20,6 @@ INSERT INTO user_points (user_id, total_points, spent_points, current_streak_day
 SELECT id, 0, 0, 0 FROM users WHERE email = 'demo@isb.com'
 ON CONFLICT (user_id) DO NOTHING;
 
--- STK'lar (Round-Up bağış hedefleri)
-INSERT INTO ngos (name, description, is_active)
-SELECT * FROM (VALUES
-  ('TEMA', 'Türkiye Erozyonla Mücadele', true),
-  ('LÖSEV', 'Lösemili Çocuklar Vakfı', true),
-  ('AKUT', 'Arama Kurtarma Derneği', true)
-) AS v(name, description, is_active)
-WHERE NOT EXISTS (SELECT 1 FROM ngos LIMIT 1);
-
 -- Reels (finansal okuryazarlık videoları)
 INSERT INTO reels (title, description, video_url, duration_seconds, points_reward, category, is_active)
 SELECT * FROM (VALUES
@@ -44,7 +35,6 @@ INSERT INTO tasks (title, description, points_reward, type, is_active)
 SELECT * FROM (VALUES
   ('İlk Hedefini Oluştur', 'Bir birikim hedefi ekle', 50, 'one_time', true),
   ('3 Video İzle', 'Finansal okuryazarlık videoları', 30, 'one_time', true),
-  ('Round-Up Aç', 'Yuvarlama kuralı ekle', 40, 'one_time', true),
   ('Arkadaşını Davet Et', 'İş-Gen''e birini davet et', 500, 'one_time', true)
 ) AS v(title, description, points_reward, type, is_active)
 WHERE NOT EXISTS (SELECT 1 FROM tasks LIMIT 1);

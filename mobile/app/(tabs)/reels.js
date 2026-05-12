@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADIUS } from '../../constants/theme';
 import { reels as reelsApi, rewards as rewardsApi } from '../../lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const REEL_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCt8NYkfnl2XEqB1wisQc0EF1T4PohbXofU1zfwIoJuPb7WAf53F7F87Ldixnb0ETYlvHi2yg407INtoB-LxQ6ImYvG-Xa-fpVKSMOV-BNkk89kKvE0J5N_fdkTHhpKn1Mn9ft51or48fOuiS8Z5bnhcRYLIvortvMnPRc5yKlQzaELr13ngFL4PfkFQs1ymLJx_rWhXSL1Bq0Z31WO5r4vEC9IgoroHemmefNNoqgEOsZiUduOXRZMA3oa5D4qcUj8x1PPwIyYxm5-';
 const CREATOR_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1-DEG1XpJ-O59KQRBzReTZbcMFgN0XprUnmtx1s1bt9lak2gDPXAZ8JSdyvufPhAsSTkf5F0DFmEoSwEva38mfHQDDWz3Br4tYJNPhbF39JJQ5zdbp-uj2MaH5V-r875b6BkYkKD_qKn25A3msdb8Xl2WcsOtcPLuT-reyb0d1MWLdXwqbBHyWw4iAs3P9gCHZFhVelQFk0Bi8WzyOgCYnrZffJ3OP5MYwu3LZw9fEPsdhwTG9UtqSpiDxaBMmJeSQh_M81mK07x3';
@@ -17,6 +18,7 @@ const CREATOR_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1-D
 export default function ReelsScreen() {
   const [reels, setReels] = useState([]);
   const [points, setPoints] = useState(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     Promise.all([
@@ -51,19 +53,13 @@ export default function ReelsScreen() {
       </View>
 
       {/* Top header: For You / Following + search + points pill */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
         <View style={styles.tabsRow}>
           <TouchableOpacity style={styles.tabActive}>
             <Text style={styles.tabActiveText}>For You</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tab}>
-            <Text style={styles.tabText}>Following</Text>
-          </TouchableOpacity>
         </View>
         <View style={styles.topRightRow}>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Ionicons name="search" size={24} color="#fff" />
-          </TouchableOpacity>
           <View style={styles.pointsPill}>
             <Ionicons name="trophy" size={18} color="#fff" />
             <Text style={styles.pointsPillText}>+{currentReel.points_reward ?? 50} PTS</Text>
@@ -97,12 +93,6 @@ export default function ReelsScreen() {
             <Ionicons name="chatbubble" size={32} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.sideCount}>856</Text>
-        </View>
-        <View style={styles.sideItem}>
-          <TouchableOpacity>
-            <Ionicons name="share" size={32} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.sideCount}>2.1k</Text>
         </View>
         <View style={styles.sideItem}>
           <TouchableOpacity>
@@ -185,18 +175,10 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   tabActiveText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  tab: {},
-  tabText: { color: 'rgba(255,255,255,0.8)', fontSize: 16, fontWeight: '600' },
   topRightRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   pointsPill: {
     flexDirection: 'row',

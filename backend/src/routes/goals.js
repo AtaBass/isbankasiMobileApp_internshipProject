@@ -64,44 +64,6 @@ router.post('/splits', async (req, res, next) => {
   }
 });
 
-// Round-Up kuralları
-router.get('/round-up', async (req, res, next) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT r.*, g.name AS goal_name FROM round_up_rules r LEFT JOIN goals g ON g.id = r.goal_id
-       WHERE r.user_id = $1 AND r.is_active`,
-      [req.user.id]
-    );
-    res.json(rows);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.post('/round-up', async (req, res, next) => {
-  try {
-    const { round_to, custom_multiple, destination_type, goal_id, ngo_id } = req.body;
-    const { rows } = await pool.query(
-      `INSERT INTO round_up_rules (user_id, round_to, custom_multiple, destination_type, goal_id, ngo_id)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [req.user.id, round_to || 'nearest', custom_multiple || null, destination_type || 'goal', goal_id || null, ngo_id || null]
-    );
-    res.status(201).json(rows[0]);
-  } catch (e) {
-    next(e);
-  }
-});
-
-// STK listesi (Round-Up hedefi seçimi için)
-router.get('/ngos', async (req, res, next) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM ngos WHERE is_active = true');
-    res.json(rows);
-  } catch (e) {
-    next(e);
-  }
-});
-
 // Hedef güncelle / sil
 router.patch('/:id', async (req, res, next) => {
   try {

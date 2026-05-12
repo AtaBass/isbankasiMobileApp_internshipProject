@@ -10,15 +10,8 @@ async function seed() {
     ON CONFLICT (email) DO NOTHING
   `, ['demo@isb.com', hashed, 'Demo Kullanıcı', 5000]);
 
-  await pool.query(`
-    INSERT INTO ngos (name, description) VALUES
-    ('TEMA', 'Türkiye Erozyonla Mücadele'),
-    ('LÖSEV', 'Lösemili Çocuklar Vakfı'),
-    ('AKUT', 'Arama Kurtarma Derneği')
-    ON CONFLICT DO NOTHING
-  `);
-
   const { rows: reels } = await pool.query('SELECT id FROM reels LIMIT 1');
+
   if (reels.length === 0) {
     await pool.query(`
       INSERT INTO reels (title, description, video_url, duration_seconds, points_reward, category) VALUES
@@ -33,8 +26,7 @@ async function seed() {
     await pool.query(`
       INSERT INTO tasks (title, description, points_reward, type) VALUES
       ('İlk Hedefini Oluştur', 'Bir birikim hedefi ekle', 50, 'one_time'),
-      ('3 Video İzle', 'Finansal okuryazarlık videoları', 30, 'one_time'),
-      ('Round-Up Aç', 'Yuvarlama kuralı ekle', 40, 'one_time')
+      ('3 Video İzle', 'Finansal okuryazarlık videoları', 30, 'one_time')
     `);
   }
 

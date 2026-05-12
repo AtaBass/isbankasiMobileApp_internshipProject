@@ -46,16 +46,11 @@ export const goals = {
   update: (id, data) => api('PATCH', `/goals/${id}`, data),
   splits: () => api('GET', '/goals/splits'),
   addSplit: (data) => api('POST', '/goals/splits', data),
-  roundUp: () => api('GET', '/goals/round-up'),
-  addRoundUp: (data) => api('POST', '/goals/round-up', data),
-  ngos: () => api('GET', '/goals/ngos'),
 };
 
 export const social = {
   groups: () => api('GET', '/social/groups'),
   createGroup: (data) => api('POST', '/social/groups', data),
-  challenges: () => api('GET', '/social/challenges'),
-  createChallenge: (data) => api('POST', '/social/challenges', data),
   addExpense: (groupId, data) => api('POST', `/social/groups/${groupId}/expenses`, data),
   debts: (groupId) => api('GET', `/social/groups/${groupId}/debts`),
 };
@@ -82,9 +77,4 @@ export const rewards = {
   myPoints: () => api('GET', '/rewards/my-points'),
   redeem: (rewardId) => api('POST', '/rewards/redeem', { reward_id: rewardId }),
   myRedemptions: () => api('GET', '/rewards/my-redemptions'),
-};
-
-export const ai = {
-  insights: () => api('GET', '/ai/insights'),
-  dailyTip: () => api('GET', '/ai/daily-tip'),
 };

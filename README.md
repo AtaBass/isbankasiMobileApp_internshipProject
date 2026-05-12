@@ -5,10 +5,9 @@ Gençlere yönelik, İş Bankası lacivert (#003399) temalı mobil bankacılık 
 
 ## Özellikler
 
-- **Ana Sayfa:** Bakiye, son işlemler, aktif hedef özeti, günün AI tavsiyesi, devam eden challenge, puan/seri.
-- **Hedefler:** Otomatik dağıtım (Automatic Splitter), Round-Up (yuvarlama ile birikim/STK bağışı), hedef CRUD.
-- **Sosyal:** Ortak kumbara, harcama grupları, Finansal Challenge, Splitwise tarzı borç takibi.
-- **AI Buddy:** Harcama analizi, kategorik uyarılar (“Bu ay dışarıda yemek %20 arttı”), tasarruf tavsiyeleri.
+- **Ana Sayfa:** Bakiye, son işlemler, aktif hedef özeti, günün tavsiyesi, puan/seri.
+- **Hedefler:** Otomatik dağıtım (Automatic Splitter), hedef CRUD.
+- **Sosyal:** Ortak kumbara, harcama grupları, Splitwise tarzı borç takibi.
 - **Reels & Görevler:** Finansal okuryazarlık videoları (Reels), izleyince puan; görevler (Task) ile ek puan; Streak; Ödüller (cashback, sinema, konser).
 
 ## Kurulum
@@ -63,13 +62,13 @@ IsB/
 │   ├── src/
 │   │   ├── db/          # schema, pool, migrate, seed
 │   │   ├── middleware/  # auth, error
-│   │   └── routes/      # auth, goals, social, transactions, reels, tasks, rewards, ai, dashboard
+│   │   └── routes/      # auth, goals, social, transactions, reels, tasks, rewards, dashboard
 │   └── package.json
 ├── mobile/
 │   ├── app/
 │   │   ├── _layout.js   # root layout, auth yönlendirme
 │   │   ├── index.js     # giriş / kayıt
-│   │   └── (tabs)/      # Ana Sayfa, Hedefler, Sosyal, AI Buddy, Reels & Görevler
+│   │   └── (tabs)/      # Ana Sayfa, Hedefler, Sosyal, Reels & Görevler
 │   ├── constants/theme.js
 │   └── lib/api.js
 └── README.md
@@ -81,12 +80,11 @@ IsB/
 |-------------|-------------------|
 | Auth        | `POST /api/auth/login`, `POST /api/auth/register` |
 | Dashboard   | `GET /api/dashboard` |
-| Goals       | `GET/POST /api/goals`, `GET/POST /api/goals/splits`, `GET/POST /api/goals/round-up`, `GET /api/goals/ngos` |
-| Social      | `GET/POST /api/social/groups`, `GET/POST /api/social/challenges`, `POST /api/social/groups/:id/expenses`, `GET /api/social/groups/:id/debts` |
+| Goals       | `GET/POST /api/goals`, `GET/POST /api/goals/splits` |
+| Social      | `GET/POST /api/social/groups`, `POST /api/social/groups/:id/expenses`, `GET /api/social/groups/:id/debts` |
 | Transactions| `GET /api/transactions`, `POST /api/transactions/income`, `POST /api/transactions/expense` |
 | Reels       | `GET /api/reels`, `POST /api/reels/:id/watch` |
 | Tasks       | `GET /api/tasks`, `POST /api/tasks/:id/complete` |
 | Rewards     | `GET /api/rewards`, `GET /api/rewards/my-points`, `POST /api/rewards/redeem` |
-| AI          | `GET /api/ai/insights`, `GET /api/ai/daily-tip` |
 
 Tüm ilgili route’lar (reels listesi hariç) JWT ile korunur; isteklerde `Authorization: Bearer <token>` gönderin.

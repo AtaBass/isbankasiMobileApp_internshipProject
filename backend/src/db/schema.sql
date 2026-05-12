@@ -41,29 +41,6 @@ CREATE TABLE IF NOT EXISTS automatic_splits (
   UNIQUE(user_id, goal_id)
 );
 
--- STK'lar (Round-Up bağış hedefleri) - round_up_rules'tan önce
-CREATE TABLE IF NOT EXISTS ngos (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  logo_url TEXT,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Round-Up Kuralları (Yuvarlama → yatırım/STK)
-CREATE TABLE IF NOT EXISTS round_up_rules (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  round_to VARCHAR(20) NOT NULL DEFAULT 'nearest', -- 'nearest' (1 TL), '5', '10', 'custom'
-  custom_multiple DECIMAL(10, 2),
-  destination_type VARCHAR(50) NOT NULL, -- 'goal' | 'ngo'
-  goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL,
-  ngo_id INTEGER REFERENCES ngos(id) ON DELETE SET NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Sosyal Gruplar (Ortak Kumbara, borç takibi)
 CREATE TABLE IF NOT EXISTS social_groups (
   id SERIAL PRIMARY KEY,
@@ -84,19 +61,6 @@ CREATE TABLE IF NOT EXISTS group_members (
   role VARCHAR(20) DEFAULT 'member', -- 'admin' | 'member'
   joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(group_id, user_id)
-);
-
--- Finansal Challenge'lar
-CREATE TABLE IF NOT EXISTS challenges (
-  id SERIAL PRIMARY KEY,
-  from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  to_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type VARCHAR(50) NOT NULL, -- 'spending_limit' | 'savings_target'
-  target_value DECIMAL(15, 2),
-  current_value DECIMAL(15, 2) DEFAULT 0,
-  end_date TIMESTAMP NOT NULL,
-  status VARCHAR(20) DEFAULT 'active', -- 'active' | 'completed' | 'failed'
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Grup harcamaları (Splitwise mantığı)
@@ -124,14 +88,13 @@ CREATE TABLE IF NOT EXISTS debt_splits (
 CREATE TABLE IF NOT EXISTS transactions (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type VARCHAR(50) NOT NULL, -- 'income' | 'expense' | 'transfer' | 'round_up' | 'split'
+  type VARCHAR(50) NOT NULL, -- 'income' | 'expense' | 'transfer' | 'split'
   amount DECIMAL(15, 2) NOT NULL,
   balance_after DECIMAL(15, 2),
   category VARCHAR(100),
   description VARCHAR(500),
   goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL,
-  round_up_amount DECIMAL(15, 2),
-  source VARCHAR(50), -- 'manual' | 'automatic_split' | 'round_up' | 'challenge'
+  source VARCHAR(50), -- 'manual' | 'automatic_split' | 'challenge'
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   metadata JSONB
 );
@@ -215,19 +178,7 @@ CREATE TABLE IF NOT EXISTS reward_redemptions (
   status VARCHAR(20) DEFAULT 'pending' -- 'pending' | 'claimed'
 );
 
--- AI Buddy - analiz önbelleği
-CREATE TABLE IF NOT EXISTS ai_insights (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  insight_type VARCHAR(50), -- 'spending_alert' | 'savings_tip' | 'trend'
-  message TEXT NOT NULL,
-  data JSONB, -- grafik/istatistik verisi
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- İndeksler
 CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id);
-CREATE INDEX IF NOT EXISTS idx_challenges_users ON challenges(from_user_id, to_user_id);
 CREATE INDEX IF NOT EXISTS idx_debt_splits_user ON debt_splits(user_id);
-CREATE INDEX IF NOT EXISTS idx_ai_insights_user ON ai_insights(user_id, created_at DESC);

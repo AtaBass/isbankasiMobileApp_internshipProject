@@ -77,7 +77,7 @@ router.post('/income', async (req, res, next) => {
   }
 });
 
-// Harcama ekle (Round-Up uygulanabilir)
+// Harcama ekle
 router.post('/expense', async (req, res, next) => {
   try {
     const { amount, description, category } = req.body;
@@ -93,54 +93,22 @@ router.post('/expense', async (req, res, next) => {
       const balance = Number(user[0].main_balance);
       if (balance < amt) return res.status(400).json({ error: 'Yetersiz bakiye' });
 
-      let roundUpAmount = 0;
-      const { rows: roundRules } = await client.query(
-        'SELECT * FROM round_up_rules WHERE user_id = $1 AND is_active LIMIT 1',
-        [req.user.id]
-      );
-      if (roundRules.length) {
-        const r = roundRules[0];
-        let multiple = 1;
-        if (r.round_to === '5') multiple = 5;
-        else if (r.round_to === '10') multiple = 10;
-        else if (r.round_to === 'custom' && r.custom_multiple) multiple = Number(r.custom_multiple);
-        const rounded = Math.ceil(amt / multiple) * multiple;
-        roundUpAmount = Number((rounded - amt).toFixed(2));
-      }
-
-      const totalDeduct = amt + roundUpAmount;
-      if (balance < totalDeduct) roundUpAmount = 0; // round-up'ı atla
-
-      const newBalance = balance - amt - roundUpAmount;
+      const newBalance = balance - amt;
 
       await client.query(
         'UPDATE users SET main_balance = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
         [newBalance, req.user.id]
       );
       await client.query(
-        `INSERT INTO transactions (user_id, type, amount, balance_after, category, description, round_up_amount, source) VALUES ($1, 'expense', $2, $3, $4, $5, $6, 'manual')`,
-        [req.user.id, -amt, newBalance, category || null, description || 'Harcama', roundUpAmount || null]
+        `INSERT INTO transactions (user_id, type, amount, balance_after, category, description, source) VALUES ($1, 'expense', $2, $3, $4, $5, 'manual')`,
+        [req.user.id, -amt, newBalance, category || null, description || 'Harcama']
       );
-
-      if (roundUpAmount > 0 && roundRules.length) {
-        const rule = roundRules[0];
-        if (rule.destination_type === 'goal' && rule.goal_id) {
-          await client.query(
-            'UPDATE goals SET current_amount = current_amount + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-            [roundUpAmount, rule.goal_id]
-          );
-        }
-        await client.query(
-          `INSERT INTO transactions (user_id, type, amount, balance_after, goal_id, description, source) VALUES ($1, 'round_up', $2, $3, $4, $5, 'round_up')`,
-          [req.user.id, -roundUpAmount, newBalance, rule.goal_id, `Yuvarlama: ${description || 'Harcama'}`]
-        );
-      }
 
       const { rows: updated } = await client.query(
         'SELECT main_balance FROM users WHERE id = $1',
         [req.user.id]
       );
-      res.status(201).json({ balance: updated[0].main_balance, round_up: roundUpAmount });
+      res.status(201).json({ balance: updated[0].main_balance });
     } finally {
       client.release();
     }

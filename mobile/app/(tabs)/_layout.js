@@ -10,54 +10,55 @@ export default function TabsLayout() {
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarStyle: {
-          backgroundColor: COLORS.surface,
-          borderTopColor: COLORS.border,
-          borderTopWidth: 1,
-          paddingTop: 6,
+          backgroundColor: '#fff',
+          borderTopWidth: 0,
+          paddingTop: 10,
+          paddingBottom: 10,
+          height: 74,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.08,
+          shadowRadius: 10,
+          elevation: 10,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+        tabBarItemStyle: { paddingVertical: 2 },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Ana Sayfa',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="goals"
-        options={{
-          title: 'Hedefler',
-          tabBarIcon: ({ color, size }) => <Ionicons name="flag" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="social"
         options={{
           title: 'Sosyal',
-          tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="ai"
-        options={{
-          title: 'AI',
-          tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="reels"
         options={{
           title: 'Reels',
-          tabBarIcon: ({ color, size }) => <Ionicons name="play-circle" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'play' : 'play-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="tasks"
         options={{
           title: 'Görevler',
-          tabBarIcon: ({ color, size }) => <Ionicons name="reader" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'checkmark-done' : 'checkmark-done-outline'} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

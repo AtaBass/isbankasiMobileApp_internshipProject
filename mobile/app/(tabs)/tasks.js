@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Image,
   ImageBackground,
   Modal,
   Pressable,
@@ -17,29 +18,87 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS } from '../../constants/theme';
 import { tasks as tasksApi, rewards as rewardsApi } from '../../lib/api';
 import { getCurrentPasaportLevel, PASAPORT_LEVELS } from '../../lib/pasaportLevel';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const BG_LIGHT = '#f5f6f8';
+const BG_LIGHT = '#f0f4ff';
 const BORDER_CARD = '#e5e7eb';
 const TEXT_MAIN = '#101318';
-const TEXT_MUTED = '#6b7280';
+const TEXT_MUTED = '#475569';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 16;
-const CASHBACK_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyHUZnLubQZweMmKm8U73tBEPUNALcmjiGhiTpUnP5dawabnqVa2MN291r8ztRP7JlYli2fKznikmyjLx-QbUrgHOxyBKf0UXKQ9_4dP2Zb3CjJDmrI7KDg7aEu7c4yFPdWVTRifGmFOneCTiqBRmlxu9efbTg-QJP_mq6toth0MSI9WxY1i1hmue3tFqC4eZF7Ip-5n8UgjbZnWladoSUxFfXzGhQDeVu0eBm-Air8a_HMvC6fSmZcET03RDiIryQLVx3r6ljS0qE';
-const MOVIE_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBRPKC5UlLHAEHde9HA7eCUTgnNEf9HR9ZnANoxv-eGT2mFUyRJ8TBEm4UdIijeXjpdZxnlxrtsFLC9HagzbJJrCWOsqChYVBmu788A8ux_PwUCKmjYD-nt_hT7oUnNY8WqL2-Z2l08mKSHQBok_ZscZ-dnvKO3B6HTMaUbJN-VYTAQ-1pkL5qYyjree8DYdMC6QS12SE_UXrrAjcW-tX1UnL9dQEz1P1tHprcpS0Nq2ppyAD39J2-PC9IGex9TwA4zfYVp3-XfK4sn';
-const CONCERT_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDXkufq_LLa4QyJGxAKFkmao9tQpBqUoE9JJsmR7xde83UpImzLt0KDaad_XP0javGTA1SInRsDWAzRv_AjHPinXcLBDEvHwieYbKFOzeLy2-6UPkZ_LceVI1zobSLRWREHsEqr7NleRwnPqxsDkRKUJmQIwzFAsoA9zJULjrTry-xQWm3D-VzBxwN2orBIl8ACkHSgFRFBb9tguWaccaSiZsFvXL2iP4FrmXOj1y-NuAUoqzR8rk3tPslYYQS-s5057ZB3jdovfRKs';
+const CASHBACK_IMG = require('../../assets/cashback.png');
+const MOVIE_IMG = require('../../assets/biletix.png');
+const THEATRE_IMG = require('../../assets/tiyatro.png');
+const CONCERT_LOGO = require('../../assets/biletinial.png');
+const MAVI_LOGO = require('../../assets/mavi.png');
 
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-const CURRENT_DAY_INDEX = 3; // Thursday = 4th (0-based 3)
+const MIGROS_LOGO = require('../../assets/migros.png');
+const NAYS_LOGO = require('../../assets/nays.png');
+const MAKSIMUM_GENC_LOGO = require('../../assets/maksimum-genc.png');
 
-const ALL_CHALLENGES = [
-  { id: 'goal', title: 'Hedef belirle', description: 'İlk hedefini planla', points_reward: 50, icon: 'flag', actionLabel: 'Başla' },
-  { id: 'refer', title: 'Arkadaşını davet et', description: 'Çevreni davet et', points_reward: 100, icon: 'person-add', actionLabel: 'Davet et' },
-  { id: 'budget', title: 'Bütçe oluştur', description: 'Bu ay harcama limitlerini belirle', points_reward: 75, icon: 'wallet', actionLabel: 'Başla' },
-  { id: 'savings', title: 'İlk birikim', description: 'Hedef cebine transfer yap', points_reward: 150, icon: 'trending-up', actionLabel: 'Başla' },
-  { id: 'reels', title: 'Reel izle', description: 'Bir eğitim reelini tamamla', points_reward: 25, icon: 'play-circle', actionLabel: 'İzle' },
-  { id: 'card', title: 'Kartını bağla', description: 'Ödeme yöntemi ekle', points_reward: 200, icon: 'card', actionLabel: 'Bağla' },
-  { id: 'challenge', title: 'Challenge\'a katıl', description: 'Sosyal bir challenge\'da yer al', points_reward: 80, icon: 'trophy', actionLabel: 'Katıl' },
-  { id: 'ai', title: 'AI Buddy\'ye sor', description: 'Yapay zeka asistanından öneri al', points_reward: 30, icon: 'sparkles', actionLabel: 'Sor' },
+const DAYS_STREAK = [
+  { day: 'Pzt', done: true },
+  { day: 'Sal', done: true },
+  { day: 'Çar', done: true },
+  { day: 'Per', done: true, today: true },
+  { day: 'Cum', done: false },
+  { day: 'Cmt', done: false },
+  { day: 'Paz', done: false },
+];
+
+const BASE_USER_POINTS = 1500;
+const BASE_LEADERBOARD = [
+  { name: 'Elif K.', points: 4200, avatar: 'E' },
+  { name: 'Ahmet Y.', points: 3800, avatar: 'A' },
+  { name: 'Sen', points: BASE_USER_POINTS, avatar: 'M', isUser: true },
+  { name: 'Zeynep T.', points: 1350, avatar: 'Z' },
+  { name: 'Burak S.', points: 1100, avatar: 'B' },
+  { name: 'Selin A.', points: 980, avatar: 'S' },
+  { name: 'Mert D.', points: 750, avatar: 'M' },
+];
+
+const DEMO_ACTIVE_TASKS = [
+  {
+    id: 'migros_500',
+    title: "Migros'tan 500 TL'lik alışveriş yap",
+    description: 'Bu hafta market alışverişini Migros’tan tamamla',
+    points_reward: 30,
+    icon: 'cart',
+    actionLabel: 'Başla',
+    color: '#f97316', // turuncu
+    logo: MIGROS_LOGO,
+  },
+  {
+    id: 'nays_account',
+    title: 'Nays hesabı aç',
+    description: 'Yeni Nays hesabını oluştur',
+    points_reward: 60,
+    icon: 'person-add',
+    actionLabel: 'Başla',
+    color: '#93c5fd', // açık mavi
+    accent: '#f472b6', // pembe
+    logo: NAYS_LOGO,
+  },
+  {
+    id: 'levis_jeans',
+    title: 'Maksimum Genç Kart edin',
+    description: 'Maksimum Genç kart başvurunu tamamla',
+    points_reward: 45,
+    icon: 'shirt',
+    actionLabel: 'Başla',
+    color: '#ef4444', // kırmızı
+    logo: MAKSIMUM_GENC_LOGO,
+    iconBg: '#ffffff',
+    logoLarge: true,
+  },
+];
+
+// "Tümünü gör" modalında gösterilecek görevler (2. görsel)
+const MODAL_TASKS = [
+  { id: 'mini_savings', title: 'Haftalık Mini Birikim', description: '', points_reward: 10, icon: 'wallet', actionLabel: 'Başla' },
+  { id: 'coffee_free', title: 'Kahvesiz Hafta', description: '', points_reward: 15, icon: 'cafe', actionLabel: 'Başla' },
+  { id: 'steps_5k', title: 'Günlük 5K Adım', description: '', points_reward: 20, icon: 'walk', actionLabel: 'Başla' },
+  { id: 'no_outside_food', title: 'Dışarıda Yemek Yok', description: '', points_reward: 25, icon: 'restaurant', actionLabel: 'Başla' },
 ];
 
 function isDemoTaskId(id) {
@@ -48,6 +107,7 @@ function isDemoTaskId(id) {
 }
 
 export default function TasksScreen() {
+  const insets = useSafeAreaInsets();
   const [tasks, setTasks] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [points, setPoints] = useState(null);
@@ -57,6 +117,7 @@ export default function TasksScreen() {
   const [protectedOn, setProtectedOn] = useState(true);
   const [showAllChallenges, setShowAllChallenges] = useState(false);
   const [showPasaportModal, setShowPasaportModal] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [redeemedRewardIds, setRedeemedRewardIds] = useState([]);
   const [completedTaskIds, setCompletedTaskIds] = useState([]);
 
@@ -102,18 +163,58 @@ export default function TasksScreen() {
   };
 
   const rewardItems = [
-    { id: '1', name: '10₺ Cashback', desc: 'Cüzdanına anında bakiye kredisi', points_cost: 800, image: CASHBACK_IMG, popular: true },
-    { id: '2', name: 'Sinema Bileti', desc: 'Cinema Pass ile istediğin film, istediğin zaman', points_cost: 500, image: MOVIE_IMG, popular: false },
+    {
+      id: '1',
+      name: '100₺ Cashback',
+      desc: 'Cüzdanına anında bakiye kredisi',
+      points_cost: 800,
+      useIcon: true, // para simgesi göster
+      popular: true,
+    },
+    {
+      id: '2',
+      name: "Mavi'den 200 TL Hediye Kuponu",
+      desc: "Mavi mağazalarında 200 TL'lik kupon fırsatı",
+      points_cost: 500,
+      image: MAVI_LOGO,
+      imageIsLogo: true, // logo olarak ortala
+      logoBg: '#1f4f8d',
+      popular: false,
+    },
   ];
-  const wideReward = { id: '3', name: 'Konser Bileti', desc: 'Canlı müzik giriş bileti', points_cost: 1200, image: CONCERT_IMG };
-  const allRewardsList = [...rewardItems, wideReward];
+  const wideReward = {
+    id: '3',
+    name: 'Tiyatro Bileti',
+    desc: 'İstediğin oyun, istediğin zaman',
+    points_cost: 1200,
+    image: THEATRE_IMG,
+    imageIsLogo: true,
+    logoBg: '#0b74ff',
+  };
+  const concertReward = {
+    id: '4',
+    name: 'Konser Bileti',
+    desc: 'Konser biletini hemen al',
+    points_cost: 1400,
+    image: MOVIE_IMG,
+    imageIsLogo: true,
+    logoBg: '#16a34a',
+  };
+  const allRewardsList = [...rewardItems, wideReward, concertReward];
 
   const spentOnRedeemed = allRewardsList
     .filter((r) => redeemedRewardIds.includes(r.id))
     .reduce((sum, r) => sum + (Number(r.points_cost) || 0), 0);
-  const pointsFromCompletedTasks = ALL_CHALLENGES.filter((t) => completedTaskIds.includes(t.id))
+  const pointsFromCompletedTasks = DEMO_ACTIVE_TASKS.filter((t) => completedTaskIds.includes(t.id))
     .reduce((sum, t) => sum + (Number(t.points_reward) || 0), 0);
-  const totalPts = 1500 + pointsFromCompletedTasks - spentOnRedeemed;
+  // Kullanılabilir puan (ödül harcayınca düşer)
+  const totalPts = BASE_USER_POINTS + pointsFromCompletedTasks - spentOnRedeemed;
+  // Liderlik puanı (ödül harcayınca değişmez)
+  const leaderboardUserPts = BASE_USER_POINTS + pointsFromCompletedTasks;
+  const leaderboardData = BASE_LEADERBOARD
+    .map((u) => (u.isUser ? { ...u, points: leaderboardUserPts } : u))
+    .slice()
+    .sort((a, b) => (b.points || 0) - (a.points || 0));
 
   const redeemReward = async (reward) => {
     const cost = Number(reward.points_cost) || 0;
@@ -141,11 +242,8 @@ export default function TasksScreen() {
     }
   };
 
-  const levelInfo = getCurrentPasaportLevel();
-  const activeTasks = Array.isArray(tasks) ? tasks.filter((t) => !t.completed) : [];
-  const baseMissions = activeTasks.length > 0 ? activeTasks : ALL_CHALLENGES.slice(0, 2);
-  const missionList = baseMissions.filter((t) => !completedTaskIds.includes(t.id));
-  const allChallengesList = activeTasks.length > 0 ? [...activeTasks, ...ALL_CHALLENGES.filter((c) => !activeTasks.some((t) => t.id === c.id))] : ALL_CHALLENGES;
+  const missionList = DEMO_ACTIVE_TASKS.filter((t) => !completedTaskIds.includes(t.id));
+  const allChallengesList = MODAL_TASKS;
 
   return (
     <View style={styles.wrapper}>
@@ -156,71 +254,55 @@ export default function TasksScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />
         }
       >
-        {/* Header: başlık + seviye (tıklanabilir) + puan */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Görevler ve Ödüller</Text>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+          <View>
+            <Text style={styles.headerTitle}>Görevler & Ödüller</Text>
+          </View>
           <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.levelBadge}
-              onPress={() => setShowPasaportModal(true)}
-              activeOpacity={0.8}
+              style={styles.pointsPill}
+              onPress={() => setShowLeaderboard(true)}
+              activeOpacity={0.85}
             >
-              <Text style={styles.levelBadgeText}>{levelInfo.title}</Text>
-              <Text style={styles.levelBadgeSub}>Seviye {levelInfo.level}</Text>
+              <Ionicons name="trophy" size={12} color="#fff" />
+              <Text style={styles.pointsPillText}>{totalPts.toLocaleString('tr-TR')}</Text>
             </TouchableOpacity>
-            <View style={styles.pointsPill}>
-              <Ionicons name="card" size={20} color={COLORS.primary} />
-              <Text style={styles.pointsPillText}>{totalPts.toLocaleString('tr-TR')} puan</Text>
-            </View>
           </View>
         </View>
 
         {/* 7-Day Streak */}
         <View style={styles.section}>
-          <View style={styles.streakCard}>
-            <View style={styles.streakHeader}>
-              <View style={styles.streakTitleRow}>
-                <Ionicons name="flame" size={24} color={COLORS.primary} />
-                <Text style={styles.streakTitle}>7 Günlük Seri</Text>
-              </View>
-              <View style={styles.protectedBadge}>
-                <Ionicons name="shield-checkmark" size={18} color={COLORS.primary} />
-                <Text style={styles.protectedText}>Korumalı</Text>
-                <TouchableOpacity
-                  style={[styles.toggleTrack, protectedOn && styles.toggleTrackOn]}
-                  onPress={() => setProtectedOn(!protectedOn)}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.toggleThumb, protectedOn && styles.toggleThumbOn]} />
-                </TouchableOpacity>
+          <View style={styles.glassCard}>
+            <View style={styles.streakNavy}>
+              <View style={styles.streakHeader}>
+                <View style={styles.streakTitleRow}>
+                  <Ionicons name="flash" size={16} color="#93c5fd" />
+                  <Text style={styles.streakTitle}>7 Günlük Seri</Text>
+                </View>
+                <View style={styles.protectedPill}>
+                  <Ionicons name="shield-checkmark" size={12} color="#93c5fd" />
+                </View>
               </View>
             </View>
-            <View style={styles.daysRow}>
-              {DAY_LABELS.flatMap((label, i) => {
-                const isDone = i < CURRENT_DAY_INDEX;
-                const isCurrent = i === CURRENT_DAY_INDEX;
-                const isFuture = i > CURRENT_DAY_INDEX;
-                const connectorToRightDone = isDone && i + 1 <= CURRENT_DAY_INDEX;
-                const dayEl = (
-                  <View key={`day-${i}`} style={styles.dayBlock}>
-                    <View style={[
-                      styles.dayCircle,
-                      isDone && styles.dayCircleDone,
-                      isCurrent && styles.dayCircleCurrent,
-                      isFuture && styles.dayCircleFuture,
-                    ]}>
-                      {isDone && <Ionicons name="checkmark" size={14} color="#fff" />}
-                      {isCurrent && <Text style={styles.dayCircleCurrentText}>4</Text>}
-                      {isFuture && <Text style={styles.dayCircleFutureText}>{i + 1}</Text>}
-                    </View>
-                    <Text style={[styles.dayLabel, isCurrent && styles.dayLabelCurrent]}>{label}</Text>
+            <View style={styles.daysRowWrap}>
+              {DAYS_STREAK.map((d, i) => (
+                <View key={d.day} style={styles.dayBlock}>
+                  <View style={[
+                    styles.dayCircle,
+                    d.done && !d.today && styles.dayCircleDone,
+                    d.today && styles.dayCircleToday,
+                    !d.done && styles.dayCircleFuture,
+                  ]}>
+                    {d.done ? (
+                      <Ionicons name="checkmark" size={16} color={d.today ? COLORS.primary : '#fff'} />
+                    ) : (
+                      <Text style={styles.dayCircleNum}>{i + 1}</Text>
+                    )}
                   </View>
-                );
-                const connEl = i < DAY_LABELS.length - 1 ? (
-                  <View key={`conn-${i}`} style={[styles.connector, connectorToRightDone ? styles.connectorDone : styles.connectorFuture]} />
-                ) : null;
-                return connEl ? [dayEl, connEl] : [dayEl];
-              })}
+                  <Text style={[styles.dayLabel, d.today && styles.dayLabelToday]}>{d.day}</Text>
+                </View>
+              ))}
             </View>
           </View>
         </View>
@@ -233,10 +315,23 @@ export default function TasksScreen() {
               <Text style={styles.viewAll}>Tümünü gör</Text>
             </TouchableOpacity>
           </View>
-          {missionList.slice(0, 4).map((task) => (
-            <View key={task.id} style={styles.missionCard}>
-              <View style={styles.missionIconWrap}>
-                <Ionicons name={task.icon || 'flag'} size={24} color={COLORS.primary} />
+          {missionList.slice(0, 3).map((task, idx) => (
+            <View key={task.id} style={[styles.glassCard, styles.missionCard]}>
+              <View
+                style={[
+                  styles.missionIconWrap,
+                  {
+                    backgroundColor: task.iconBg || task.color || COLORS.primary,
+                    borderWidth: task.accent ? 2 : 0,
+                    borderColor: task.accent ? task.accent : 'transparent',
+                  },
+                ]}
+              >
+                {task.logo ? (
+                  <Image source={task.logo} style={[styles.missionLogo, task.logoLarge && styles.missionLogoLarge]} />
+                ) : (
+                  <Ionicons name={task.icon || 'flag'} size={18} color="#fff" />
+                )}
               </View>
               <View style={styles.missionBody}>
                 <Text style={styles.missionTitle}>{task.title}</Text>
@@ -250,7 +345,7 @@ export default function TasksScreen() {
                   disabled={completingId === task.id}
                 >
                   {completingId === task.id ? (
-                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <Text style={styles.missionBtnText}>{task.actionLabel || 'Başla'}</Text>
                   )}
@@ -267,14 +362,40 @@ export default function TasksScreen() {
             {rewardItems.map((r) => (
               <View key={r.id} style={styles.rewardCard}>
                 <View style={styles.rewardCardTop}>
-                  <ImageBackground source={{ uri: r.image }} style={styles.rewardImage} resizeMode="cover">
-                    <View style={styles.rewardImageOverlay} />
-                    {r.popular && (
-                      <View style={styles.popularBadge}>
-                        <Text style={styles.popularBadgeText}>POPÜLER</Text>
+                  {r.useIcon ? (
+                    <View style={styles.rewardIconHero}>
+                      <View style={styles.rewardIconCircle}>
+                        <Ionicons name="cash-outline" size={36} color={COLORS.primary} />
                       </View>
-                    )}
-                  </ImageBackground>
+                      {r.popular && (
+                        <View style={styles.popularBadge}>
+                          <Text style={styles.popularBadgeText}>POPÜLER</Text>
+                        </View>
+                      )}
+                    </View>
+                  ) : r.imageIsLogo ? (
+                    <View style={[styles.rewardLogoHero, { backgroundColor: r.logoBg || '#0b74ff' }]}>
+                      <Image source={r.image} style={styles.rewardLogoImage} />
+                      {r.popular && (
+                        <View style={styles.popularBadge}>
+                          <Text style={styles.popularBadgeText}>POPÜLER</Text>
+                        </View>
+                      )}
+                    </View>
+                  ) : (
+                    <ImageBackground
+                      source={typeof r.image === 'string' ? { uri: r.image } : r.image}
+                      style={styles.rewardImage}
+                      resizeMode="cover"
+                    >
+                      <View style={styles.rewardImageOverlay} />
+                      {r.popular && (
+                        <View style={styles.popularBadge}>
+                          <Text style={styles.popularBadgeText}>POPÜLER</Text>
+                        </View>
+                      )}
+                    </ImageBackground>
+                  )}
                 </View>
                 <View style={styles.rewardCardBody}>
                   <Text style={styles.rewardName} numberOfLines={1}>{r.name}</Text>
@@ -301,9 +422,19 @@ export default function TasksScreen() {
             ))}
           </View>
           <View style={styles.rewardCardWide}>
-            <ImageBackground source={{ uri: wideReward.image }} style={styles.rewardWideLeft} resizeMode="cover">
-              <View style={styles.rewardWideLeftOverlay} />
-            </ImageBackground>
+            {wideReward.imageIsLogo ? (
+              <View style={[styles.rewardWideLogoLeft, { backgroundColor: wideReward.logoBg || '#0b74ff' }]}>
+                <Image source={wideReward.image} style={styles.rewardWideLogoImage} />
+              </View>
+            ) : (
+              <ImageBackground
+                source={typeof wideReward.image === 'string' ? { uri: wideReward.image } : wideReward.image}
+                style={styles.rewardWideLeft}
+                resizeMode="cover"
+              >
+                <View style={styles.rewardWideLeftOverlay} />
+              </ImageBackground>
+            )}
             <View style={styles.rewardWideRight}>
               <Text style={styles.rewardNameWide}>{wideReward.name}</Text>
               <Text style={styles.rewardDescWide}>{wideReward.desc}</Text>
@@ -316,12 +447,48 @@ export default function TasksScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={styles.redeemBtn}
+                    style={styles.cartBtn}
                     onPress={() => redeemReward(wideReward)}
                     disabled={redeemingId === wideReward.id}
                   >
-                    <Ionicons name="gift" size={14} color={TEXT_MAIN} />
-                    <Text style={styles.redeemBtnText}>Kullan</Text>
+                    <Ionicons name="cart" size={16} color="#fff" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.rewardCardWide, styles.rewardCardWideGap]}>
+            {concertReward.imageIsLogo ? (
+              <View style={[styles.rewardWideLogoLeft, { backgroundColor: concertReward.logoBg || '#facc15' }]}>
+                <Image source={concertReward.image} style={styles.rewardWideLogoImage} />
+              </View>
+            ) : (
+              <ImageBackground
+                source={typeof concertReward.image === 'string' ? { uri: concertReward.image } : concertReward.image}
+                style={styles.rewardWideLeft}
+                resizeMode="cover"
+              >
+                <View style={styles.rewardWideLeftOverlay} />
+              </ImageBackground>
+            )}
+            <View style={styles.rewardWideRight}>
+              <Text style={styles.rewardNameWide}>{concertReward.name}</Text>
+              <Text style={styles.rewardDescWide}>{concertReward.desc}</Text>
+              <View style={styles.rewardFooterWide}>
+                <Text style={styles.rewardPts}>{concertReward.points_cost} puan</Text>
+                {redeemedRewardIds.includes(concertReward.id) ? (
+                  <View style={styles.redeemedBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+                    <Text style={styles.redeemedBadgeText}>Ödül Alındı</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.cartBtn}
+                    onPress={() => redeemReward(concertReward)}
+                    disabled={redeemingId === concertReward.id}
+                  >
+                    <Ionicons name="cart" size={16} color="#fff" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -434,6 +601,63 @@ export default function TasksScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Liderlik Tablosu modal */}
+      <Modal visible={showLeaderboard} animationType="slide" transparent onRequestClose={() => setShowLeaderboard(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLeaderboard(false)}>
+          <Pressable style={styles.leaderboardSheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.leaderboardHandle} />
+            <View style={styles.leaderboardHeader}>
+              <View>
+                <Text style={styles.leaderboardTitle}>Liderlik Tablosu</Text>
+                <Text style={styles.leaderboardSubtitle}>Bu haftanın en aktif kullanıcıları</Text>
+              </View>
+              <TouchableOpacity style={styles.leaderboardClose} onPress={() => setShowLeaderboard(false)}>
+                <Ionicons name="close" size={16} color={TEXT_MAIN} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.podiumRow}>
+              <View style={styles.podiumItem}>
+                <View style={[styles.podiumAvatar, styles.podiumAvatar2]}>
+                  <Text style={styles.podiumAvatarText}>{leaderboardData[1].avatar}</Text>
+                </View>
+                <Text style={styles.podiumName}>{leaderboardData[1].name}</Text>
+                <Text style={styles.podiumPts}>{leaderboardData[1].points.toLocaleString('tr-TR')}</Text>
+                <View style={styles.podiumBlock2}><Text style={styles.podiumNum}>2</Text></View>
+              </View>
+              <View style={[styles.podiumItem, styles.podiumItem1]}>
+                <Ionicons name="trophy" size={20} color="#e2e8f0" style={{ marginBottom: 4 }} />
+                <View style={[styles.podiumAvatar, styles.podiumAvatar1]}>
+                  <Text style={styles.podiumAvatarText}>{leaderboardData[0].avatar}</Text>
+                </View>
+                <Text style={[styles.podiumName, styles.podiumName1]}>{leaderboardData[0].name}</Text>
+                <Text style={styles.podiumPts1}>{leaderboardData[0].points.toLocaleString('tr-TR')}</Text>
+                <View style={styles.podiumBlock1}><Text style={styles.podiumNum1}>1</Text></View>
+              </View>
+              <View style={styles.podiumItem}>
+                <View style={[styles.podiumAvatar, styles.podiumAvatar3]}>
+                  <Text style={styles.podiumAvatarText}>{leaderboardData[2].avatar}</Text>
+                </View>
+                <Text style={styles.podiumName}>{leaderboardData[2].name}</Text>
+                <Text style={styles.podiumPts}>{leaderboardData[2].points.toLocaleString('tr-TR')}</Text>
+                <View style={styles.podiumBlock3}><Text style={styles.podiumNum}>3</Text></View>
+              </View>
+            </View>
+            <ScrollView style={styles.leaderboardList} contentContainerStyle={styles.leaderboardListContent}>
+              {leaderboardData.slice(3).map((user, i) => (
+                <View key={user.name} style={[styles.leaderboardRow, user.isUser && styles.leaderboardRowUser]}>
+                  <Text style={styles.leaderboardRank}>{i + 4}</Text>
+                  <View style={[styles.leaderboardAvatar, user.isUser && styles.leaderboardAvatarUser]}>
+                    <Text style={[styles.leaderboardAvatarText, user.isUser && styles.leaderboardAvatarTextUser]}>{user.avatar}</Text>
+                  </View>
+                  <Text style={[styles.leaderboardUserName, user.isUser && styles.leaderboardUserNameHighlight]}>{user.name}</Text>
+                  <Text style={styles.leaderboardUserPts}>{user.points.toLocaleString('tr-TR')}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -450,36 +674,52 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingTop: 20,
     gap: 16,
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#0b1b3d',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,51,153,0.1)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: TEXT_MAIN, flex: 1 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   levelBadge: {
-    backgroundColor: 'rgba(0,51,153,0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(0,51,153,0.15)',
+    flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 72,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: BORDER_CARD,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  levelBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
-  levelBadgeSub: { fontSize: 9, color: TEXT_MUTED },
+  levelBadgeText: { fontSize: 10, color: TEXT_MUTED },
+  levelBadgeNum: { fontSize: 10, fontWeight: '700', color: TEXT_MAIN },
   pointsPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0,51,153,0.1)',
+    gap: 6,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: 'rgba(0,51,153,0.2)',
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  pointsPillText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  pointsPillText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  glassCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.06)',
+    overflow: 'hidden',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -551,126 +791,98 @@ const styles = StyleSheet.create({
   pasaportRewardsTitle: { fontSize: 14, fontWeight: '700', color: TEXT_MAIN },
   pasaportRewardsDesc: { fontSize: 13, color: TEXT_MUTED, lineHeight: 20 },
   section: { paddingHorizontal: CARD_PADDING, marginTop: 8, marginBottom: 24 },
-  streakCard: {
-    backgroundColor: 'rgba(0,51,153,0.05)',
-    borderRadius: RADIUS.xl,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(0,51,153,0.1)',
+  streakNavy: {
+    backgroundColor: '#0f172a',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   streakHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
   },
   streakTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  streakTitle: { fontSize: 20, fontWeight: '700', fontStyle: 'italic', color: TEXT_MAIN },
-  protectedBadge: {
+  streakTitle: { fontSize: 16, fontWeight: '700', color: '#e2e8f0' },
+  protectedPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
   },
-  protectedText: { fontSize: 12, fontWeight: '700', color: TEXT_MUTED },
-  toggleTrack: {
-    width: 32,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: COLORS.border,
-    marginLeft: 8,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-  toggleTrackOn: { backgroundColor: 'rgba(0,51,153,0.2)' },
-  toggleThumb: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#9ca3af',
-  },
-  toggleThumbOn: { backgroundColor: COLORS.primary, alignSelf: 'flex-end' },
-  daysRow: {
+  daysRowWrap: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
-  dayBlock: {
-    alignItems: 'center',
-  },
+  dayBlock: { alignItems: 'center', flex: 1 },
   dayCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: COLORS.border,
+    backgroundColor: '#e0e7ff',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dayCircleDone: {
-    backgroundColor: COLORS.primary,
-    borderStyle: 'solid',
-    borderColor: COLORS.primary,
+  dayCircleDone: { backgroundColor: COLORS.primary },
+  dayCircleToday: {
+    backgroundColor: '#93c5fd',
+    shadowColor: '#93c5fd',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  dayCircleCurrent: {
-    backgroundColor: COLORS.primary,
-    borderWidth: 4,
-    borderColor: COLORS.surface,
-    borderStyle: 'solid',
-  },
-  dayCircleCurrentText: { fontSize: 12, fontWeight: '700', color: '#fff' },
   dayCircleFuture: {},
-  dayCircleFutureText: { fontSize: 12, fontWeight: '700', color: TEXT_MUTED },
-  dayLabel: { fontSize: 10, fontWeight: '700', color: TEXT_MUTED, marginTop: 8 },
-  dayLabelCurrent: { color: COLORS.primary },
-  connector: {
-    height: 2,
-    borderRadius: 1,
-    flex: 1,
-    minWidth: 4,
-    marginHorizontal: 2,
-  },
-  connectorDone: { backgroundColor: COLORS.primary },
-  connectorFuture: { backgroundColor: COLORS.border },
+  dayCircleNum: { fontSize: 12, fontWeight: '700', color: TEXT_MUTED },
+  dayLabel: { fontSize: 10, fontWeight: '600', color: TEXT_MUTED, marginTop: 6 },
+  dayLabelToday: { color: COLORS.primary, fontWeight: '700' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: TEXT_MAIN, marginBottom: 12 },
   viewAll: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
   missionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
     padding: 16,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: BORDER_CARD,
     marginBottom: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.06)',
   },
   missionIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.lg,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: 'rgba(0,51,153,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
-  missionBody: { flex: 1, marginLeft: 16 },
+  missionLogo: { width: 34, height: 34, resizeMode: 'contain' },
+  missionLogoLarge: { width: 42, height: 42 },
+  missionBody: { flex: 1, marginLeft: 12 },
   missionTitle: { fontSize: 14, fontWeight: '700', color: TEXT_MAIN },
   missionDesc: { fontSize: 12, color: TEXT_MUTED, marginTop: 2 },
   missionRight: { alignItems: 'flex-end' },
-  missionPts: { fontSize: 14, fontWeight: '700', color: COLORS.primary, marginBottom: 6 },
+  missionPts: { fontSize: 12, fontWeight: '700', color: COLORS.primary, marginBottom: 4 },
   missionBtn: {
     backgroundColor: COLORS.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: RADIUS.full,
+    borderRadius: 999,
     minWidth: 64,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  missionBtnText: { fontSize: 10, fontWeight: '700', color: TEXT_MAIN, letterSpacing: 0.5 },
+  missionBtnText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   rewardsGrid: { flexDirection: 'row', gap: 16, marginBottom: 16 },
   rewardCard: {
     flex: 1,
@@ -684,6 +896,10 @@ const styles = StyleSheet.create({
   rewardCardTop: { height: 112, backgroundColor: 'rgba(0,51,153,0.2)' },
   rewardImage: { flex: 1 },
   rewardImageOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,51,153,0.2)' },
+  rewardIconHero: { flex: 1, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center' },
+  rewardIconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0,51,153,0.10)', justifyContent: 'center', alignItems: 'center' },
+  rewardLogoHero: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  rewardLogoImage: { width: 120, height: 56, resizeMode: 'contain' },
   popularBadge: {
     position: 'absolute',
     bottom: 8,
@@ -723,8 +939,11 @@ const styles = StyleSheet.create({
     borderColor: BORDER_CARD,
     overflow: 'hidden',
   },
+  rewardCardWideGap: { marginTop: 14 },
   rewardWideLeft: { width: '33%', minHeight: 96 },
   rewardWideLeftOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,51,153,0.3)' },
+  rewardWideLogoLeft: { width: '33%', minHeight: 96, justifyContent: 'center', alignItems: 'center' },
+  rewardWideLogoImage: { width: 120, height: 48, resizeMode: 'contain' },
   rewardWideRight: { flex: 1, padding: 12, justifyContent: 'center' },
   rewardNameWide: { fontSize: 14, fontWeight: '700', color: TEXT_MAIN },
   rewardDescWide: { fontSize: 10, color: TEXT_MUTED, marginTop: 2 },
@@ -739,4 +958,132 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
   },
   redeemBtnText: { fontSize: 12, fontWeight: '700', color: TEXT_MAIN },
+
+  // Leaderboard modal
+  leaderboardSheet: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    paddingBottom: 32,
+  },
+  leaderboardHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: BORDER_CARD,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  leaderboardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: CARD_PADDING,
+    paddingBottom: 16,
+  },
+  leaderboardTitle: { fontSize: 18, fontWeight: '800', color: TEXT_MAIN },
+  leaderboardSubtitle: { fontSize: 12, color: TEXT_MUTED, marginTop: 2 },
+  leaderboardClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#e0e7ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  podiumRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    gap: 12,
+    paddingHorizontal: CARD_PADDING,
+    paddingBottom: 16,
+  },
+  podiumItem: { alignItems: 'center', flex: 1 },
+  podiumItem1: { marginTop: -12 },
+  podiumAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  podiumAvatar1: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+  },
+  podiumAvatar2: { backgroundColor: '#64748b' },
+  podiumAvatar3: { backgroundColor: COLORS.primaryLight },
+  podiumAvatarText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  podiumName: { fontSize: 11, fontWeight: '600', color: TEXT_MAIN },
+  podiumName1: { fontWeight: '700' },
+  podiumPts: { fontSize: 10, color: TEXT_MUTED, marginTop: 2 },
+  podiumPts1: { fontSize: 10, fontWeight: '600', color: COLORS.primary, marginTop: 2 },
+  podiumBlock2: {
+    width: 64,
+    height: 56,
+    backgroundColor: '#e0e7ff',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    marginTop: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  podiumBlock1: {
+    width: 64,
+    height: 72,
+    backgroundColor: 'rgba(0,51,153,0.1)',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    marginTop: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  podiumBlock3: {
+    width: 64,
+    height: 40,
+    backgroundColor: '#dbeafe',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    marginTop: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  podiumNum: { fontSize: 18, fontWeight: '800', color: TEXT_MUTED },
+  podiumNum1: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+  // Show ranks 4-7 initially, scroll for more
+  leaderboardList: { maxHeight: 260 },
+  leaderboardListContent: { paddingHorizontal: CARD_PADDING, paddingBottom: 24 },
+  leaderboardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+  },
+  leaderboardRowUser: { backgroundColor: 'rgba(0,51,153,0.06)', borderColor: 'rgba(0,51,153,0.2)' },
+  leaderboardRank: { fontSize: 14, fontWeight: '700', color: TEXT_MUTED, width: 24, textAlign: 'center' },
+  leaderboardAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#e0e7ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  leaderboardAvatarUser: { backgroundColor: COLORS.primary },
+  leaderboardAvatarText: { fontSize: 12, fontWeight: '700', color: TEXT_MUTED },
+  leaderboardAvatarTextUser: { color: '#fff' },
+  leaderboardUserName: { flex: 1, marginLeft: 12, fontSize: 14, fontWeight: '600', color: TEXT_MAIN },
+  leaderboardUserNameHighlight: { color: COLORS.primary },
+  leaderboardUserPts: { fontSize: 14, fontWeight: '700', color: TEXT_MAIN },
 });
